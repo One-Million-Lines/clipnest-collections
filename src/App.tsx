@@ -7,10 +7,14 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { DataProvider } from "@/contexts/DataContext";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Feed from "./pages/Feed";
 import Collections from "./pages/Collections";
 import Pages from "./pages/Pages";
 import Tags from "./pages/Tags";
 import Profile from "./pages/Profile";
+import Landing from "./pages/Landing";
+import Explore from "./pages/Explore";
+import ExploreCollection from "./pages/ExploreCollection";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,19 +38,40 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 function AppRoutes() {
   return (
     <Routes>
+      {/* Public routes */}
       <Route
         path="/"
+        element={
+          <AuthRoute>
+            <Landing />
+          </AuthRoute>
+        }
+      />
+      <Route
+        path="/login"
         element={
           <AuthRoute>
             <Login />
           </AuthRoute>
         }
       />
+      <Route path="/explore" element={<Explore />} />
+      <Route path="/explore/:collectionId" element={<ExploreCollection />} />
+
+      {/* Protected routes */}
       <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/feed"
+        element={
+          <ProtectedRoute>
+            <Feed />
           </ProtectedRoute>
         }
       />
