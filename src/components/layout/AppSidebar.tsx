@@ -1,4 +1,4 @@
-import { Home, FolderOpen, Globe, Tags, User, LogOut } from "lucide-react";
+import { Home, FolderOpen, Globe, Tags, User, LogOut, PlayCircle } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +20,7 @@ import { Separator } from "@/components/ui/separator";
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
+  { title: "Feed", url: "/feed", icon: PlayCircle },
   { title: "Collections", url: "/collections", icon: FolderOpen },
   { title: "Pages", url: "/pages", icon: Globe },
   { title: "Tags", url: "/tags", icon: Tags },
