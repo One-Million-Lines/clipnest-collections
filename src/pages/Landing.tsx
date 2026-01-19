@@ -60,7 +60,7 @@ export default function Landing() {
         <div className="container mx-auto px-4 text-center">
           <Badge variant="secondary" className="mb-6">
             <Sparkles className="h-3 w-3 mr-1" />
-            Watch on your terms
+            Watch on your terms. 
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6 max-w-3xl mx-auto leading-tight">
             Your personal library for short videos
@@ -251,7 +251,7 @@ export default function Landing() {
             <span className="font-medium">ClipNest</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            © 2024 ClipNest. Watch on your terms.
+            © 2024 ClipNest. Watch on your terms. by Alex Rada for <a href="https://onemillionlines.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">OneMillionLines</a>
           </p>
         </div>
       </footer>
