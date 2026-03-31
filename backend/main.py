@@ -17,12 +17,8 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
+        "http://localhost:5301",
+        "http://127.0.0.1:5301",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -49,7 +45,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, exit_handler)
     signal.signal(signal.SIGINT, exit_handler)
 
-    port = int(config.get("APP_PORT", "5030"))
+    port = int(config.get("APP_PORT", "5201"))
     host = config.get("APP_HOST", "0.0.0.0")
 
     vtlog.info("Starting PDF Input API", port=port, host=host)
