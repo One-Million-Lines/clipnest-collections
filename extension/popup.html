@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ClipNest Collector</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { font: 13px/1.4 -apple-system, system-ui, sans-serif; width: 320px; margin: 0; padding: 14px; }
+      h1 { font-size: 14px; margin: 0 0 10px; display: flex; align-items: center; gap: 6px; }
+      h1 .dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg,#6366f1,#ec4899); }
+      button { width: 100%; padding: 9px; margin: 6px 0; border: 0; border-radius: 8px; font-weight: 600; cursor: pointer; }
+      .primary { background: #6366f1; color: #fff; }
+      .secondary { background: #e5e7eb; color: #111; }
+      .secondary:hover, .primary:hover { filter: brightness(0.95); }
+      label { display: block; font-size: 11px; opacity: 0.7; margin-top: 8px; }
+      input { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px; margin-top: 2px; }
+      #status { margin-top: 10px; font-size: 12px; min-height: 18px; white-space: pre-wrap; }
+      .ok { color: #059669; } .err { color: #dc2626; }
+      details { margin-top: 8px; } summary { cursor: pointer; font-size: 11px; opacity: 0.7; }
+      hr { border: 0; border-top: 1px solid #e5e7eb; margin: 10px 0; }
+    </style>
+  </head>
+  <body>
+    <h1><span class="dot"></span> ClipNest Collector</h1>
+    <button id="scan" class="secondary">1 · Scan this page for reels</button>
+    <button id="send" class="primary" disabled>2 · Send collected reels →</button>
+    <hr />
+    <button id="serverCollect" class="secondary">Server-side collect this URL</button>
+    <div id="status"></div>
+    <details>
+      <summary>Settings</summary>
+      <label>ClipNest API base URL</label>
+      <input id="apiBase" placeholder="http://localhost:5201" />
+      <label>X-API-Key (optional)</label>
+      <input id="apiKey" placeholder="leave empty for local dev" />
+      <button id="save" class="secondary">Save settings</button>
+    </details>
+    <script src="popup.js"></script>
+  </body>
+</html>

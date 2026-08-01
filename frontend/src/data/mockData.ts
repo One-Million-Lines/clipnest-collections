@@ -34,12 +34,13 @@ export const mockTags: Tag[] = [
 ];
 
 // Platforms
-export type Platform = "youtube" | "facebook" | "tiktok";
+export type Platform = "youtube" | "facebook" | "tiktok" | "instagram";
 
 export const platformLabels: Record<Platform, string> = {
   youtube: "YouTube",
   facebook: "Facebook",
   tiktok: "TikTok",
+  instagram: "Instagram",
 };
 
 // Pages (Sources)
@@ -177,6 +178,8 @@ export interface Video {
   pageId: string;
   publishedAt: string;
   views: number;
+  url?: string;
+  platform?: Platform;
 }
 
 export const mockVideos: Video[] = [

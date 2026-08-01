@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "ClipNest Collector",
+  "version": "0.1.0",
+  "description": "Developer tool: collect public reels / short videos from the current page and send them to the ClipNest API.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_title": "ClipNest Collector",
+    "default_popup": "popup.html"
+  }
+}

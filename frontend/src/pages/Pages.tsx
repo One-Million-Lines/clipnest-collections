@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, MoreVertical, Pencil, Trash2, Globe } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, Globe, Loader2, Radar } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
 import { Page, Platform, platformLabels } from "@/data/mockData";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -49,10 +49,28 @@ const defaultFormData: PageFormData = {
 };
 
 export default function Pages() {
-  const { pages, tags, collections, addPage, updatePage, deletePage } = useData();
+  const { pages, tags, collections, addPage, updatePage, deletePage, collectFromUrl, online } = useData();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingPage, setEditingPage] = useState<Page | null>(null);
   const [formData, setFormData] = useState<PageFormData>(defaultFormData);
+  const [collectUrl, setCollectUrl] = useState("");
+  const [collecting, setCollecting] = useState(false);
+  const [collectMsg, setCollectMsg] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const handleCollect = async () => {
+    if (!collectUrl.trim()) return;
+    setCollecting(true);
+    setCollectMsg(null);
+    try {
+      const res = await collectFromUrl(collectUrl.trim());
+      setCollectMsg({ text: `Collected ${res.created} new reel(s) into "${res.page.name}".`, ok: true });
+      setCollectUrl("");
+    } catch (e) {
+      setCollectMsg({ text: (e as Error).message || "Collection failed", ok: false });
+    } finally {
+      setCollecting(false);
+    }
+  };
 
   const handleCreate = () => {
     setFormData(defaultFormData);
@@ -118,6 +136,38 @@ export default function Pages() {
             Add Page
           </Button>
         </div>
+
+        {/* Server-side reel collector */}
+        <Card>
+          <CardContent className="pt-6 space-y-2">
+            <div className="flex items-center gap-2">
+              <Radar className="h-4 w-4 text-primary" />
+              <span className="font-medium text-sm">Collect reels from a public page</span>
+              {!online && (
+                <Badge variant="outline" className="text-xs">API offline — start the backend</Badge>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Paste a YouTube Shorts, TikTok, Instagram reel or Facebook URL…"
+                value={collectUrl}
+                onChange={(e) => setCollectUrl(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCollect()}
+                disabled={!online || collecting}
+              />
+              <Button onClick={handleCollect} disabled={!online || collecting || !collectUrl.trim()} className="gap-2 shrink-0">
+                {collecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Radar className="h-4 w-4" />}
+                Collect
+              </Button>
+            </div>
+            {collectMsg && (
+              <p className={`text-xs ${collectMsg.ok ? "text-green-600" : "text-destructive"}`}>{collectMsg.text}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Runs server-side via public oEmbed / Open Graph. Or use the ClipNest Collector browser extension for bulk scraping.
+            </p>
+          </CardContent>
+        </Card>
 
         {pages.length > 0 ? (
           <div className="space-y-3">

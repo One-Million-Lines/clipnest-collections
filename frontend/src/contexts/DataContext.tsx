@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import {
   mockTags,
   mockPages,
@@ -8,14 +8,18 @@ import {
   Page,
   Collection,
   Video,
-  Platform,
 } from "@/data/mockData";
+import { clipnestApi, CollectResult } from "@/lib/api";
 
 interface DataContextType {
   tags: Tag[];
   pages: Page[];
   collections: Collection[];
   videos: Video[];
+  online: boolean;
+  loading: boolean;
+  refresh: () => Promise<void>;
+  collectFromUrl: (url: string, tagIds?: string[], collectionIds?: string[]) => Promise<CollectResult>;
   addTag: (name: string, color: string) => void;
   updateTag: (id: string, name: string) => void;
   deleteTag: (id: string) => void;
@@ -33,61 +37,110 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [tags, setTags] = useState<Tag[]>(mockTags);
   const [pages, setPages] = useState<Page[]>(mockPages);
   const [collections, setCollections] = useState<Collection[]>(mockCollections);
-  const [videos] = useState<Video[]>(mockVideos);
+  const [videos, setVideos] = useState<Video[]>(mockVideos);
+  const [online, setOnline] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const addTag = (name: string, color: string) => {
-    const newTag: Tag = {
-      id: `tag-${Date.now()}`,
-      name,
-      color,
-    };
-    setTags([...tags, newTag]);
+  const refresh = async () => {
+    try {
+      const data = await clipnestApi.bootstrap();
+      setTags(data.tags);
+      setPages(data.pages);
+      setCollections(data.collections);
+      setVideos(data.videos);
+      setOnline(true);
+    } catch {
+      // Backend unreachable — keep working with in-memory mock data.
+      setOnline(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const collectFromUrl = async (url: string, tagIds: string[] = [], collectionIds: string[] = []) => {
+    const result = await clipnestApi.collectPage(url, tagIds, collectionIds);
+    await refresh();
+    return result;
+  };
+
+  // ── Tags ──────────────────────────────────────────────────────────────────
+  const addTag = async (name: string, color: string) => {
+    if (online) {
+      try {
+        const tag = await clipnestApi.createTag(name, color);
+        setTags((t) => [...t, tag]);
+        return;
+      } catch { /* fall through to local */ }
+    }
+    setTags((t) => [...t, { id: `tag-${Date.now()}`, name, color }]);
   };
 
   const updateTag = (id: string, name: string) => {
-    setTags(tags.map((t) => (t.id === id ? { ...t, name } : t)));
+    setTags((t) => t.map((x) => (x.id === id ? { ...x, name } : x)));
+    if (online) clipnestApi.updateTag(id, { name }).catch(() => {});
   };
 
   const deleteTag = (id: string) => {
-    setTags(tags.filter((t) => t.id !== id));
-    // Remove tag from pages
-    setPages(pages.map((p) => ({ ...p, tagIds: p.tagIds.filter((tid) => tid !== id) })));
+    setTags((t) => t.filter((x) => x.id !== id));
+    setPages((p) => p.map((x) => ({ ...x, tagIds: x.tagIds.filter((tid) => tid !== id) })));
+    if (online) clipnestApi.deleteTag(id).catch(() => {});
   };
 
-  const addPage = (page: Omit<Page, "id" | "followedAt">) => {
-    const newPage: Page = {
-      ...page,
-      id: `page-${Date.now()}`,
-      followedAt: new Date().toISOString().split("T")[0],
-    };
-    setPages([...pages, newPage]);
+  // ── Pages ─────────────────────────────────────────────────────────────────
+  const addPage = async (page: Omit<Page, "id" | "followedAt">) => {
+    if (online) {
+      try {
+        const created = await clipnestApi.createPage(page);
+        setPages((p) => [...p, created]);
+        return;
+      } catch { /* fall through */ }
+    }
+    setPages((p) => [
+      ...p,
+      { ...page, id: `page-${Date.now()}`, followedAt: new Date().toISOString().split("T")[0] },
+    ]);
   };
 
   const updatePage = (id: string, updates: Partial<Page>) => {
-    setPages(pages.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+    setPages((p) => p.map((x) => (x.id === id ? { ...x, ...updates } : x)));
+    if (online) clipnestApi.updatePage(id, updates).catch(() => {});
   };
 
   const deletePage = (id: string) => {
-    setPages(pages.filter((p) => p.id !== id));
+    setPages((p) => p.filter((x) => x.id !== id));
+    setVideos((v) => v.filter((x) => x.pageId !== id));
+    if (online) clipnestApi.deletePage(id).catch(() => {});
   };
 
-  const addCollection = (collection: Omit<Collection, "id" | "createdAt">) => {
-    const newCollection: Collection = {
-      ...collection,
-      id: `col-${Date.now()}`,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-    setCollections([...collections, newCollection]);
+  // ── Collections ─────────────────────────────────────────────────────────────
+  const addCollection = async (collection: Omit<Collection, "id" | "createdAt">) => {
+    if (online) {
+      try {
+        const created = await clipnestApi.createCollection(collection);
+        setCollections((c) => [...c, created]);
+        return;
+      } catch { /* fall through */ }
+    }
+    setCollections((c) => [
+      ...c,
+      { ...collection, id: `col-${Date.now()}`, createdAt: new Date().toISOString().split("T")[0] },
+    ]);
   };
 
   const updateCollection = (id: string, updates: Partial<Collection>) => {
-    setCollections(collections.map((c) => (c.id === id ? { ...c, ...updates } : c)));
+    setCollections((c) => c.map((x) => (x.id === id ? { ...x, ...updates } : x)));
+    if (online) clipnestApi.updateCollection(id, updates).catch(() => {});
   };
 
   const deleteCollection = (id: string) => {
-    setCollections(collections.filter((c) => c.id !== id));
-    // Remove collection from pages
-    setPages(pages.map((p) => ({ ...p, collectionIds: p.collectionIds.filter((cid) => cid !== id) })));
+    setCollections((c) => c.filter((x) => x.id !== id));
+    setPages((p) => p.map((x) => ({ ...x, collectionIds: x.collectionIds.filter((cid) => cid !== id) })));
+    if (online) clipnestApi.deleteCollection(id).catch(() => {});
   };
 
   return (
@@ -97,6 +150,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
         pages,
         collections,
         videos,
+        online,
+        loading,
+        refresh,
+        collectFromUrl,
         addTag,
         updateTag,
         deleteTag,

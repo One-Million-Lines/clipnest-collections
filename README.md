@@ -20,6 +20,8 @@ The project explores a product concept focused on curated, algorithm-free viewin
 - In-memory CRUD-style interactions for collections, pages, and tags in the frontend state
 - Filtering by search, collection, tag, and platform in the dashboard
 - Minimal FastAPI backend with `/` and `/health`
+- Full backend API for pages, collections, tags, and videos with zero-infra local storage
+- Server-side reel/short-video collector plus a developer-run Chrome extension
 - Backend utility modules for env config parsing, logging, storage helpers, and LiteLLM-based generation helpers
 
 ## How it works
@@ -28,8 +30,18 @@ The project explores a product concept focused on curated, algorithm-free viewin
 - `frontend/src/contexts/AuthContext.tsx` simulates authentication and accepts any credentials.
 - `frontend/src/contexts/DataContext.tsx` seeds the UI with mock pages, collections, tags, and videos, then updates them in React state.
 - `frontend/src/data/mockData.ts` is the current source of truth for demo content.
-- `backend/main.py` starts a FastAPI app with CORS for the local frontend and exposes only service-status endpoints.
-- `backend/vtutils/confparser.py` loads backend env config, while `backend/vtlib/` and `backend/vtstorage/` contain shared helper code that is not yet wired into public API routes in this repository.
+- `backend/main.py` starts a FastAPI app that mounts the ClipNest API (`api_collections.py`) and seeds demo content on startup.
+- `backend/vtstorage/local_store.py` is a zero-infrastructure SQLite document store (no MongoDB required); the frontend hydrates from `GET /api/bootstrap` and writes through the CRUD endpoints, falling back to in-memory mock data when the API is offline.
+- `backend/collector.py` collects public short videos with no API keys via public oEmbed (YouTube, TikTok) and Open Graph tags (Instagram, Facebook), exposed at `POST /api/collect/page`; the browser extension posts already-extracted reels to `POST /api/collect/videos`.
+
+## Reel collector
+
+Two ways to collect reels/shorts from public pages into ClipNest:
+
+1. **In-app / server-side** — paste a public YouTube Shorts, TikTok, Instagram reel, or Facebook URL into the "Collect reels" bar on the Pages screen (calls `POST /api/collect/page`).
+2. **Browser extension** — load `extension/` unpacked in Chrome (Developer mode → Load unpacked). It scans the page you're viewing for reel/short links and sends them to the API. See `extension/README.md`.
+
+Set an optional `INGEST_API_KEY` in `backend/.env` to require an `X-API-Key` header on the collector endpoints.
 
 ## Tech stack
 
@@ -85,9 +97,9 @@ pip install -r _ops/pip/requirements.in
 python main.py
 ```
 
-The backend defaults to port `5201`.
+The backend defaults to port `5201`. It persists to a local SQLite file at `backend/data/clipnest.sqlite` — no MongoDB needed.
 
-Note: `_ops/pip/requirements.txt` is currently empty, and `_ops/pip/requirements.in` only lists base FastAPI dependencies. The backend code imports additional packages such as LiteLLM and PyMongo helpers, so backend work may require completing the dependency list first.
+The frontend reads `VITE_API_BASE` (default `http://localhost:5201`, see `frontend/.env`) and works against the live API, gracefully falling back to bundled mock data if the backend is not running.
 
 ## Configuration
 

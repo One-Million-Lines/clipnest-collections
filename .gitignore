@@ -25,3 +25,6 @@ yarn-error.log*
 pnpm-debug.log*
 
 prompt*.txt
+
+# Local document store (runtime data)
+backend/data/
